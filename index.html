@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>深夜の秘密</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 15px;
+  background: #100b18;
+  color: white;
+  font-family: sans-serif;
+}
+
+.game {
+  max-width: 800px;
+  margin: auto;
+  background: #21152d;
+  border: 1px solid #995b88;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+header {
+  padding: 20px;
+  background: #35203e;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.cover {
+  width: 100%;
+  display: block;
+}
+
+.content {
+  padding: 22px;
+}
+
+.chapter {
+  color: #ff8cbd;
+  font-size: 13px;
+  letter-spacing: 2px;
+}
+
+h2 {
+  font-size: 28px;
+  margin: 10px 0;
+}
+
+.description {
+  color: #d9c5df;
+  line-height: 1.7;
+}
+
+.status {
+  margin: 20px 0;
+  color: #ff9ecb;
+}
+
+.bar {
+  height: 8px;
+  background: #493047;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+#meter {
+  width: 0%;
+  height: 100%;
+  background: #ff79b2;
+  transition: width .3s;
+}
+
+.dialogue {
+  background: #160f22;
+  border: 1px solid #80517f;
+  border-radius: 12px;
+  padding: 18px;
+  min-height: 110px;
+  line-height: 1.9;
+  white-space: pre-line;
+}
+
+.choices {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+button {
+  padding: 15px;
+  border: 1px solid #a75d98;
+  border-radius: 12px;
+  background: #34203e;
+  color: white;
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #603653;
+  border-color: #ff79b2;
+}
+
+footer {
+  padding: 15px;
+  color: #bba8c3;
+  font-size: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="game">
+
+<header>🌙 深夜の秘密</header>
+
+<img
+  class="cover"
+  src="a_wide_collage_screenshot_montage_of_a_japanese.png"
+  alt="深夜の秘密 ビジュアル"
+>
+
+<div class="content">
+
+<div class="chapter" id="chapter"></div>
+
+<h2 id="title"></h2>
+
+<p class="description" id="description"></p>
+
+<div class="status">
+  💗 好感度：<span id="score">0</span>
+  <div class="bar">
+    <div id="meter"></div>
+  </div>
+</div>
+
+<div class="dialogue" id="dialogue"></div>
+
+<div class="choices" id="choices"></div>
+
+</div>
+
+<footer>
+  選択肢によって物語が変化する恋愛ノベルゲーム
+</footer>
+
+</div>
+
+<script>
+const story = [
+{
+  chapter: "CHAPTER 01",
+  title: "雨音と、ふたりきり",
+  description: "雨の降る駅前。ミオとふたりきりになった。",
+  text: "「……傘、持ってないの？」\nミオは少し照れた顔でこちらを見る。",
+  choices: [
+    ["駅まで一緒に歩こう", 2],
+    ["雨宿りしていこう", 1],
+    ["走って帰ろう！", -1]
+  ]
+},
+{
+  chapter: "CHAPTER 02",
+  title: "近すぎる距離",
+  description: "静かな喫茶店。ふたりで向かい合って座る。",
+  text: "「ねえ、私のことって……どう思ってる？」\nミオがじっとこちらを見つめる。",
+  choices: [
+    ["一緒にいると落ち着く", 2],
+    ["もっと君を知りたい", 3],
+    ["今は秘密", 0]
+  ]
+},
+{
+  chapter: "CHAPTER 03",
+  title: "視線の先に",
+  description: "雨が上がり、街の明かりが輝いている。",
+  text: "「今日、帰りたくないって言ったら……困る？」\nミオは少し不安そうに尋ねた。",
+  choices: [
+    ["もう少し一緒にいよう", 3],
+    ["また明日も会えるよ", 1],
+    ["何か悩みがあるの？", 2]
+  ]
+},
+{
+  chapter: "CHAPTER 04",
+  title: "本当の気持ち",
+  description: "駅の改札が見えてきた。",
+  text: "「あなたといると、いつもより素直になれるんだ」\nミオは小さく微笑んだ。",
+  choices: [
+    ["僕も特別な時間だった", 3],
+    ["またふたりで出かけよう", 2],
+    ["友達として大切だよ", 0]
+  ]
+},
+{
+  chapter: "CHAPTER 05",
+  title: "夜が明ける前に",
+  description: "改札前。別れの時間が近づいている。",
+  text: "ミオは最後にもう一度、あなたを見た。\n今夜の気持ちを伝えよう。",
+  choices: [
+    ["好きです。付き合ってください", 4, "love"],
+    ["これからも隣にいてほしい", 3, "good"],
+    ["今日はありがとう。またね", 1, "friend"]
+  ]
+}
+];
+
+let index = 0;
+let score = 0;
+let locked = false;
+
+const $ = id => document.getElementById(id);
+
+function render() {
+  locked = false;
+
+  const s = story[index];
+
+  $("chapter").textContent = s.chapter;
+  $("title").textContent = s.title;
+  $("description").textContent = s.description;
+  $("dialogue").textContent = s.text;
+  $("score").textContent = score;
+
+  $("meter").style.width =
+    Math.max(0, Math.min(100, score / 14 * 100)) + "%";
+
+  const box = $("choices");
+  box.innerHTML = "";
+
+  s.choices.forEach(([label, points, ending]) => {
+    const button = document.createElement("button");
+    button.textContent = "♡ " + label;
+
+    button.onclick = () => {
+      if (locked) return;
+      locked = true;
+
+      score += points;
+
+      if (ending) {
+        finish(ending);
+        return;
+      }
+
+      $("score").textContent = score;
+
+      $("dialogue").textContent =
+        "ミオは少し照れくさそうに笑った。\n" +
+        "ふたりの距離が、少しだけ近づいた気がする。";
+
+      box.innerHTML = "";
+
+      const next = document.createElement("button");
+      next.textContent = "▶ 次へ進む";
+
+      next.onclick = () => {
+        index++;
+        render();
+      };
+
+      box.appendChild(next);
+    };
+
+    box.appendChild(button);
+  });
+}
+
+function finish(type) {
+  $("chapter").textContent = "ENDING";
+
+  if (type === "love" && score >= 10) {
+    $("title").textContent = "💗 TRUE END";
+    $("description").textContent = "雨上がりの告白";
+
+    $("dialogue").textContent =
+      "「……私も、好き」\n" +
+      "ミオはうれしそうに笑った。\n" +
+      "ふたりの新しい物語が始まる。";
+
+  } else if (type !== "friend") {
+    $("title").textContent = "🌸 GOOD END";
+    $("description").textContent = "また明日";
+
+    $("dialogue").textContent =
+      "「これから、もっとお互いを知っていこう」\n" +
+      "ふたりは次の約束をした。";
+
+  } else {
+    $("title").textContent = "☕ FRIEND END";
+    $("description").textContent = "続いていく日々";
+
+    $("dialogue").textContent =
+      "ミオは笑顔で手を振った。\n" +
+      "ふたりの物語は、これからも続いていく。";
+  }
+
+  $("score").textContent = score;
+
+  $("meter").style.width =
+    Math.max(0, Math.min(100, score / 14 * 100)) + "%";
+
+  $("choices").innerHTML = "";
+
+  const retry = document.createElement("button");
+  retry.textContent = "↻ もう一度プレイ";
+
+  retry.onclick = () => {
+    index = 0;
+    score = 0;
+    render();
+  };
+
+  $("choices").appendChild(retry);
+}
+
+render();
+</script>
+
+</body>
+</html>
